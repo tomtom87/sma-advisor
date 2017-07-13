@@ -91,7 +91,7 @@ bool BreakEven(int MN){
 int start()
 {
   int cnt, ticket, total;
-  double shortSma, longSma, ShortSL, ShortTP, LongSL, LongTP;
+  double shortSma, longSma, ShortSL, ShortTP, LongSL, LongTP, atr, stop;
 
   // Parameter Sanity checking
   if(PeriodTwo < PeriodOne){
@@ -171,10 +171,22 @@ int start()
         }
       }
       // If we are in a loss - Try to BreakEven
-      Print("Current Unrealized Profit on Order: ", OrderProfit());
-      if(OrderProfit() < 0){
-        BreakEven(MAGICNUM);
+      //Print("Current Unrealized Profit on Order: ", OrderProfit());
+      //if(OrderProfit() < 0){
+      //  BreakEven(MAGICNUM);
+      //}
+      
+      //Trail the stop on the daily 14 period ATR
+      atr = iATR(NULL, PERIOD_D1, 14, 0) / 2;
+      
+      if(OrderType() == OP_BUY){
+        StopLoss -= atr;
+      } else {
+        StopLoss += atr;
       }
+      
+      OrderModify(OrderTicket(), StopLoss, OrderOpenPrice(), OrderTakeProfit(), 0, Green);
+      
     }
 
   }
