@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
-//|                                                   Double Sma.mq4 |
-//|                                   Copyright 2017, Tom Whitbread. |
+//|                                               Double Sma ATR.mq4 |
+//|                          Copyright 2017, Tom Whitbread + Mercury |
 //|                                           http://www.gript.co.uk |
 //+------------------------------------------------------------------+
-#property copyright   "2017, Tom Whitbread."
+#property copyright   "2017, Tom Whitbread & Mercury."
 #property link        "http://www.gript.co.uk"
 #property description "Smoothed Moving Average sample expert advisor"
 
@@ -11,10 +11,10 @@
 
 // Define our Parameters
 input double Lots          = 0.1;
-input int PeriodOne        = 40; // The period for the first SMA
+input int PeriodOne        = 25; // The period for the first SMA
 input int PeriodTwo        = 100; // The period for the second SMA
-input int TakeProfit       = 40; // The take profit level (0 disable)
-input int StopLoss         = 0; // The default stop loss (0 disable)
+input int TakeProfit       = 0; // The take profit level (0 disable)
+input int StopLoss         = 20; // The default stop loss (0 disable)
 //+------------------------------------------------------------------+
 //| expert initialization functions                                  |
 //+------------------------------------------------------------------+
@@ -92,7 +92,8 @@ int start()
 {
   int cnt, ticket, total;
   double shortSma, longSma, ShortSL, ShortTP, LongSL, LongTP, atr, stop;
-
+  stop = StopLoss;
+  
   // Parameter Sanity checking
   if(PeriodTwo < PeriodOne){
     Print("Please check settings, Period Two is lesser then the first period");
@@ -180,9 +181,9 @@ int start()
       atr = iATR(NULL, PERIOD_D1, 14, 0) / 2;
       
       if(OrderType() == OP_BUY){
-        StopLoss -= atr;
+        stop -= atr;
       } else {
-        StopLoss += atr;
+        stop += atr;
       }
       
       OrderModify(OrderTicket(), StopLoss, OrderOpenPrice(), OrderTakeProfit(), 0, Green);
