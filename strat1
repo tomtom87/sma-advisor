@@ -1,0 +1,110 @@
+const double RISK = 5.0;
+const double BASE_STOP_RATIO = 0.9;
+
+const datetime PEAK_DURATION = ?
+
+  const iATR_PERIOD = ? ?
+
+    Class Position {
+      uint lotSize;
+      uint stop;
+      datetime closeAtTime;
+      bool short;
+    }
+
+static double Bid.old = 0; // static variables are not reinitalized
+static Position position = NULL;
+
+void onStart() {
+  double shortSma = iMA(NULL, 0, PeriodOne, 0, MODE_SMMA, PRICE_CLOSE, 0);
+  double longSma = iMA(NULL, 0, PeriodTwo, 0, MODE_SMMA, PRICE_CLOSE, 0);
+  double shortSmaOld = iMA(NULL, 0, PeriodOne, 0, MODE_SMMA, PRICE_CLOSE, 1);
+  double longSmaOld = iMA(NULL, 0, PeriodTwo, 0, MODE_SMMA, PRICE_CLOSE, 1);
+  uint crossPoint;
+  if (position == NULL) {
+    if (isCross(longSma, shortSma, longSmaOld, shortSmaOld)) {
+      crossPoint = (longSma + shortSma) / 2;
+      onCross(crossPoint);
+    }
+  } else {
+    managePosition();
+  }
+  Bid.old = Bid; // is this previous tick or previous candle?
+}
+
+void managePosition() {
+  if (Bid.old != 0 && Bid.old <= position.stop) { // closed at less then stop
+    position.close();
+  }
+  if (Bid <= position.stop) {
+    if (position.closeAtTime == NULL) // no close time set
+      position.closeAtTime = TimeCurrent() + PEAK_DURATION; // set time to wait out peak
+    else if (positon.closeAtTime > TimeCurrent()) // time elapsed
+      position.close();
+  } else {
+    position.closeAtTime = NULL; // not below stop anymore, cancel closeAtTime
+    if (Bid > Bid.old) { // increase stop if rising
+      position.stop = getStop(position.short);
+    }
+  }
+}
+
+bool isGoldenCross(uint crossPoint) {
+  return crossPoint < Bid;
+}
+
+void onCross(uint crosspoint) {
+  uint lotSize = getLotSize();
+  bool isShort = !isGoldenCross(crosspoint);
+  open(lotSize, isShort);
+}
+
+bool isCross(double long, short, longOld, shortOld) {
+  return (long < short && longOld > shortOld) ||
+    (long > short && longOld > shortOld)
+}
+
+uint getStop(bool isShort) {
+  uint stop = MathRound(Bid * BASE_STOP_RATIO);
+  stop = magicNumber(stop);
+  uint variance = iATR(NULL, 0, iATR_PERIOD, 0) / 2;
+  if (isShort)
+    stop -= variance;
+  else
+    stop += variance;
+  return stop;
+}
+
+uint getLotSize() {
+  return ((AccountEquity() / 100) * RISK) / 1000;
+}
+
+uint magicNumber(int base) {
+  string s = IntegerToString(base);
+  string output = "";
+  char c;
+  uint x;
+  uint i = 2; // start at 3rd digit? - don't want to change total value too much
+  for (; i < s.length; i++) {
+    x = StringToInteger(CharToString(s[i]));
+    if (x % 2 == 0) {
+      x++;
+    }
+    output[i] = IntegerToString(x);
+  }
+  return StringToInteger(output);
+}
+
+void openPosition(uint lotSize, bool isShort) {
+  position = new Position;
+  position.lotSize = lotSize;
+  position.stop = getStop(isShort);
+  position.closeAtTime = NULL;
+  position.short = isShort;
+  // TODO: something that actually opens the position...
+}
+
+void closePosition() {
+  position = NULL;
+  // TODO: something that actually closes the position...
+}
