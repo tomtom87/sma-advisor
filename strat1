@@ -61,7 +61,7 @@ void onCross(uint crosspoint) {
 
 bool isCross(double long, short, longOld, shortOld) {
   return (long < short && longOld > shortOld) ||
-    (long > short && longOld > shortOld)
+    (long > short && longOld < shortOld)
 }
 
 uint getStop(bool isShort) {
