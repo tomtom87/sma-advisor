@@ -1,0 +1,84 @@
+//+------------------------------------------------------------------+
+//|                                              MACrossATRTrail.mq4 |
+//|                         Copyright 2017,T Whitbread & M Gilliland |
+//|                                              https://gript.co.uk |
+//+------------------------------------------------------------------+
+#property copyright "Copyright 2017,T Whitbread & M Gilliland"
+#property link      "https://gript.co.uk"
+#property version   "1.00"
+#property strict
+
+input double RISK = 5.0;
+input double BASE_STOP_RATIO = 0.9;
+input int iATR_PERIOD = 14;
+input int PeriodOne = 25;
+input int PeriodTwo = 100;
+
+class Position {
+public:
+   uint lotSize;
+   uint stop;
+   datetime closeAtTime;
+   bool Short;
+};
+
+bool isGoldenCross(int crossPoint) {
+  return crossPoint < Bid;
+}
+
+void onCross(uint crosspoint) {
+  uint lotSize = getLotSize();
+  bool isShort = !isGoldenCross(crosspoint);
+  open(lotSize, isShort);
+}
+
+bool isCross(double Long, double Short, double longOld, double shortOld) {
+  return (Long < Short && longOld > shortOld) ||
+    (Long > Short && longOld < shortOld)
+}
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+  {
+//---
+   static double BidOld = 0; // static variables are not reinitalized
+   static Position.position = "";
+//---
+   return(INIT_SUCCEEDED);
+  }
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+  {
+//---
+   
+  }
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+  {
+//---
+
+     double shortSma = iMA(NULL, 0, PeriodOne, 0, MODE_SMMA, PRICE_CLOSE, 0);
+     double longSma = iMA(NULL, 0, PeriodTwo, 0, MODE_SMMA, PRICE_CLOSE, 0);
+     double shortSmaOld = iMA(NULL, 0, PeriodOne, 0, MODE_SMMA, PRICE_CLOSE, 1);
+     double longSmaOld = iMA(NULL, 0, PeriodTwo, 0, MODE_SMMA, PRICE_CLOSE, 1);
+     
+     uint crossPoint;
+     
+     if (Position.position == NULL) {
+       if (isCross(longSma, shortSma, longSmaOld, shortSmaOld)) {
+         crossPoint = (longSma + shortSma) / 2;
+         onCross(crossPoint);
+       }
+     } else {
+       managePosition();
+     }
+     BidOld = Bid; // is this previous tick or previous candle?
+     
+  }
+//+------------------------------------------------------------------+
