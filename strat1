@@ -12,7 +12,7 @@ Class Position {
    bool short;
    int orderNumber;
    double volume;
-}
+};
 
 static double Bid.old = 0; // static variables are not reinitalized
 static Position position = NULL;
