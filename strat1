@@ -1,16 +1,18 @@
 const double RISK = 5.0;
 const double BASE_STOP_RATIO = 0.9;
 
-const datetime PEAK_DURATION = ?
+const datetime PEAK_DURATION = //15 minutes, one candle
 
-  const iATR_PERIOD = ? ?
+const iATR_PERIOD = 14
 
-    Class Position {
-      uint lotSize;
-      uint stop;
-      datetime closeAtTime;
-      bool short;
-    }
+Class Position {
+   uint lotSize;
+   uint stop;
+   datetime closeAtTime;
+   bool short;
+   int orderNumber;
+   double volume;
+}
 
 static double Bid.old = 0; // static variables are not reinitalized
 static Position position = NULL;
@@ -101,10 +103,15 @@ void openPosition(uint lotSize, bool isShort) {
   position.stop = getStop(isShort);
   position.closeAtTime = NULL;
   position.short = isShort;
-  // TODO: something that actually opens the position...
+  position.volume = lotSize / Bid;
+  int slippage = 2;
+  position.orderNumber = OrderSend(NULL, 0, volume, Bid, slippage);
+  if(position.orderNumber == -1){
+    // handle error
+  }
 }
 
 void closePosition() {
+  OrderSend(NULL, 1, position.volume, Bid);
   position = NULL;
-  // TODO: something that actually closes the position...
 }
